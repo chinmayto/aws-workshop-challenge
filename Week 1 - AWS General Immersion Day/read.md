@@ -2,21 +2,10 @@
 ![Alt text](image.png)
 
 Basic modules consist of the following agenda:
-
-Compute - Amazon EC2
-
-Network - Amazon VPC
-
-Security - AWS IAM
-
-Monitoring - Amazon CloudWatch
-
-Database - Amazon RDS
-
-Storage - Amazon S3, Amazon Elastic File System
-
-Provision - AWS CloudFormation
-
-## Compute - Amazon EC2
-![Alt text](image-1.png)
-
+1. Compute - Amazon EC2
+2. Network - Amazon VPC
+3. Security - AWS IAM
+4. Monitoring - Amazon CloudWatch
+5. Database - Amazon RDS
+6. Storage - Amazon S3, Amazon Elastic File System
+7. Provision - AWS CloudFormation
