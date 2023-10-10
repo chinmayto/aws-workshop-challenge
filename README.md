@@ -30,7 +30,8 @@ Important Terraform commands.
 
 Terraform script to create AWS EC2 Key Pair. Rememer to add the key to .gitignore file, otherwise private key will be exposed to public git repo
 
-```terraform {
+```
+terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
