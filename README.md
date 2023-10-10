@@ -5,6 +5,8 @@ AWS Workshop Challenge
 
 Follow the week by week instructions to get a handson with the AWS Services
 
+These labs are for the learning and hands-on for terraform using VS Code and assume that you have understanding knowledge of AWS services and concepts
+
 ## Setup
 Before we will go deep dive to workskop, lets create environment set up. This is one time set up and can be used in future challenge.
 
@@ -21,3 +23,5 @@ Important Terraform commands.
 3. ***` terraform validate `*** - This command is used for validate the terraform code.
 4. ***` terraform plan `*** - This command is used to describe the plan. This is highly recommended to run before apply the changes.
 5. ***` terraform apply `*** - If you are statisfy with changes, run this command to apply the changes.
+
+## 1. Key Pair Creation
