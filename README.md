@@ -298,3 +298,95 @@ aws_vpc.app_vpc: Destruction complete after 1s
 
 Destroy complete! Resources: 7 destroyed.
 ```
+
+## 2. Web Tier EC2 Windows Server 2019
+
+
+```
+Plan: 7 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + web_instance_id = (known after apply)
+  + web_instance_ip = (known after apply)
+aws_vpc.app_vpc: Creating...
+aws_vpc.app_vpc: Still creating... [10s elapsed]
+aws_vpc.app_vpc: Creation complete after 17s [id=vpc-04c04866cb32d6e2e]
+aws_internet_gateway.igw: Creating...
+aws_subnet.public_subnet: Creating...
+aws_security_group.sg: Creating...
+aws_internet_gateway.igw: Creation complete after 7s [id=igw-0329071a185c6afff]
+aws_route_table.public_rt: Creating...
+aws_subnet.public_subnet: Still creating... [10s elapsed]
+aws_security_group.sg: Still creating... [10s elapsed]
+aws_route_table.public_rt: Still creating... [10s elapsed]
+aws_route_table.public_rt: Creation complete after 12s [id=rtb-086e66465adb40304]
+aws_subnet.public_subnet: Creation complete after 20s [id=subnet-0cc92776d900331a0]
+aws_route_table_association.public_rt_asso: Creating...
+aws_security_group.sg: Still creating... [20s elapsed]
+aws_security_group.sg: Creation complete after 22s [id=sg-048337eda0772a221]
+aws_instance.web: Creating...
+aws_route_table_association.public_rt_asso: Creation complete after 4s [id=rtbassoc-0288a8645618b7abd]
+aws_instance.web: Still creating... [10s elapsed]
+aws_instance.web: Still creating... [20s elapsed]
+aws_instance.web: Still creating... [30s elapsed]
+aws_instance.web: Still creating... [40s elapsed]
+aws_instance.web: Still creating... [50s elapsed]
+aws_instance.web: Still creating... [1m0s elapsed]
+aws_instance.web: Still creating... [1m10s elapsed]
+aws_instance.web: Still creating... [1m20s elapsed]
+aws_instance.web: Still creating... [1m30s elapsed]
+aws_instance.web: Still creating... [1m40s elapsed]
+aws_instance.web: Still creating... [1m50s elapsed]
+aws_instance.web: Still creating... [2m0s elapsed]
+aws_instance.web: Still creating... [2m10s elapsed]
+aws_instance.web: Creation complete after 2m17s [id=i-046e5e98f23f63202]
+
+Apply complete! Resources: 7 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+web_instance_id = "i-046e5e98f23f63202"
+web_instance_ip = "44.204.58.224"
+```
+
+Running Website:
+It takes some time for windows website to run
+![Alt text](image-2.png)
+
+![Alt text](image-3.png)
+
+Terraform Destroy output:
+
+```
+Plan: 0 to add, 0 to change, 7 to destroy.
+
+Changes to Outputs:
+  - web_instance_id = "i-046e5e98f23f63202" -> null
+  - web_instance_ip = "44.204.58.224" -> null
+aws_route_table_association.public_rt_asso: Destroying... [id=rtbassoc-0288a8645618b7abd]
+aws_instance.web: Destroying... [id=i-046e5e98f23f63202]
+aws_route_table_association.public_rt_asso: Destruction complete after 4s
+aws_route_table.public_rt: Destroying... [id=rtb-086e66465adb40304]
+aws_instance.web: Still destroying... [id=i-046e5e98f23f63202, 10s elapsed]
+aws_route_table.public_rt: Destruction complete after 6s
+aws_internet_gateway.igw: Destroying... [id=igw-0329071a185c6afff]
+aws_instance.web: Still destroying... [id=i-046e5e98f23f63202, 20s elapsed]
+aws_internet_gateway.igw: Still destroying... [id=igw-0329071a185c6afff, 10s elapsed]
+aws_instance.web: Still destroying... [id=i-046e5e98f23f63202, 30s elapsed]
+aws_internet_gateway.igw: Still destroying... [id=igw-0329071a185c6afff, 20s elapsed]
+aws_instance.web: Still destroying... [id=i-046e5e98f23f63202, 40s elapsed]
+aws_internet_gateway.igw: Still destroying... [id=igw-0329071a185c6afff, 30s elapsed]
+aws_instance.web: Still destroying... [id=i-046e5e98f23f63202, 50s elapsed]
+aws_internet_gateway.igw: Still destroying... [id=igw-0329071a185c6afff, 40s elapsed]
+aws_instance.web: Destruction complete after 54s
+aws_subnet.public_subnet: Destroying... [id=subnet-0cc92776d900331a0]
+aws_security_group.sg: Destroying... [id=sg-048337eda0772a221]
+aws_internet_gateway.igw: Destruction complete after 44s
+aws_subnet.public_subnet: Destruction complete after 4s
+aws_security_group.sg: Destruction complete after 5s
+aws_vpc.app_vpc: Destroying... [id=vpc-04c04866cb32d6e2e]
+aws_vpc.app_vpc: Destruction complete after 3s
+
+Destroy complete! Resources: 7 destroyed.
+```
+
