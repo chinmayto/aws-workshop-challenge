@@ -38,7 +38,7 @@ resource "aws_instance" "web" {
   systemctl start httpd.service
   systemctl enable httpd.service
   instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-  echo “AWS Linux VM Deployed with Terraform with instance id $(instanceId)” > /var/www/html/index.html
+   echo “AWS Linux VM Deployed with Terraform with instance id $instanceId” > /var/www/html/index.html
   EOF
 
   tags = {
