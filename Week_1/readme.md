@@ -37,8 +37,8 @@ resource "local_file" "WorkshopKeyPair" {
   filename = "WorkshopKeyPair"
 }
 ```
-
-![Alt text](image.png)
+Key pair in AWS Console
+![Alt text](Code/image.png)
 
 ## 2. Web Tier EC2 Linux
 
@@ -251,7 +251,7 @@ web_instance_ip = "44.202.80.228"
 ```
 
 Running website:
-![Alt text](image-4.png)
+![Alt text](Code/image-4.png)
 
 Terraform Destroy output:
 
@@ -493,9 +493,9 @@ web_instance_ip = "44.204.58.224"
 
 Running Website:
 It takes some time for windows website to run
-![Alt text](image-2.png)
+![Alt text](Code/image-2.png)
 
-![Alt text](image-3.png)
+![Alt text](Code/image-3.png)
 
 Terraform Destroy output:
 
