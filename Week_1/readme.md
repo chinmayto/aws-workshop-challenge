@@ -1,4 +1,8 @@
 # Week 1 - AWS General Immersion Days
+
+https://catalog.workshops.aws/general-immersionday/en-US
+
+
 ## 1. Key Pair Creation
 
 Terraform script to create AWS EC2 Key Pair. Rememer to add the key to .gitignore file, otherwise private key will be exposed to public git repo
@@ -39,7 +43,7 @@ resource "local_file" "WorkshopKeyPair" {
 ```
 Key pair in AWS Console:
 
-![Alt text](Code/image.png)
+![Alt text](Code/KeyPair/keypair.png)
 
 ## 2. Web Tier EC2 Linux
 
@@ -253,7 +257,7 @@ web_instance_ip = "44.202.80.228"
 
 Running website:
 
-![Alt text](Code/image-4.png)
+![Alt text](Code/WebTierEC2Linux/ec2linux.png)
 
 Terraform Destroy output:
 
@@ -495,9 +499,11 @@ web_instance_ip = "44.204.58.224"
 
 Running Website:
 It takes some time for windows website to run
-![Alt text](Code/image-2.png)
 
-![Alt text](Code/image-3.png)
+![Alt text](Code/WebTierEC2Win/ec2win.png)
+
+![Alt text](Code/WebTierEC2Win/rdesk.png)
+
 
 Terraform Destroy output:
 
@@ -534,3 +540,33 @@ aws_vpc.app_vpc: Destruction complete after 3s
 Destroy complete! Resources: 7 destroyed.
 ```
 
+
+## 3. Auto Scaling Group
+
+1. Create Custom AMI for auto scaling group from the YAML file provided in workshop
+
+https://catalog.workshops.aws/general-immersionday/en-US/basic-modules/10-ec2/ec2-auto-scaling/ec2-auto-scaling/1-ec2-as
+
+Create stack from yaml provided:
+
+![Alt text](stackparam.png)
+
+Submit the cloudformation template:
+
+![Alt text](submitstack.png)
+
+Running website:
+
+![Alt text](webhost.png)
+
+Create AMI from running instance:
+
+![Alt text](ami.png)
+
+Create Security Group:
+
+![Alt text](sg.png)
+
+Auto Scaling Group Diagram:
+
+![Alt text](asgdiag.png)
