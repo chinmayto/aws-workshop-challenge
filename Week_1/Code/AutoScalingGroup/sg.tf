@@ -36,7 +36,7 @@ resource "aws_security_group" "aws-sg-load-balancer" {
     security_groups = [aws_security_group.sg.id]
   }
   tags = {
-    Name = "load-balancer-sg"
+    Name = "${var.project_name}-load-balancer-sg"
   }
 }
 

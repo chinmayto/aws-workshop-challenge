@@ -35,7 +35,6 @@ resource "aws_lb_target_group" "alb_target_group" {
   }
 }
 
-
 # create a listener on port 80 with redirect action
 resource "aws_lb_listener" "alb_http_listener" {
   load_balancer_arn = aws_lb.aws-application_load_balancer.id

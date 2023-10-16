@@ -18,16 +18,17 @@ variable "vpc_cidr" {
 variable "public_subnet_cidrs" {
   description = "VPC Public Subnets"
   type        = list(string)
-  default     = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+  default     = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24", "10.0.104.0/24"]
 }
 
+/*
 # VPC Private Subnets
 variable "private_subnet_cidrs" {
   description = "VPC Private Subnets"
   type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  default     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24", "10.0.4.0/24"]
 }
-
+*/
 variable "project_name" {
   default = "CT"
 }
@@ -35,5 +36,5 @@ variable "project_name" {
 variable "azs" {
   type        = list(string)
   description = "Availability Zones"
-  default     = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  default     = ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d"]
 }

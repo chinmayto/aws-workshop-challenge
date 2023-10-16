@@ -3,7 +3,7 @@ resource "aws_vpc" "app_vpc" {
   cidr_block = var.vpc_cidr
 
   tags = {
-    Name = "app-vpc"
+    Name = "${var.project_name}-VPC"
   }
 }
 
@@ -18,7 +18,7 @@ resource "aws_subnet" "public_subnets" {
     Name = "Public Subnet ${count.index + 1}"
   }
 }
-
+/*
 #create private subnets per zone
 resource "aws_subnet" "private_subnets" {
   count             = length(var.private_subnet_cidrs)
@@ -30,15 +30,14 @@ resource "aws_subnet" "private_subnets" {
     Name = "Private Subnet ${count.index + 1}"
   }
 }
-
-
+*/
 
 # Create the internet gateway
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.app_vpc.id
 
   tags = {
-    Name = "vpc_igw"
+    Name = "${var.project_name}-igw"
   }
 }
 
@@ -56,6 +55,7 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
+# Create route table assosiation with all public subnets
 resource "aws_route_table_association" "public_subnet_asso" {
   count          = length(var.public_subnet_cidrs)
   subnet_id      = element(aws_subnet.public_subnets[*].id, count.index)

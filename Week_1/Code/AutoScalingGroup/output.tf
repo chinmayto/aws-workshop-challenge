@@ -25,6 +25,7 @@ output "autoscaling_group_arn" {
   value       = aws_autoscaling_group.aws-autoscaling-group.arn
 }
 
+# ALB Outputs
 output "alb_target_group_arn" {
   description = "ALB Target Group ARN"
   value       = aws_lb_target_group.alb_target_group.arn
