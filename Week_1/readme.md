@@ -549,27 +549,27 @@ https://catalog.workshops.aws/general-immersionday/en-US/basic-modules/10-ec2/ec
 
 Create stack from yaml provided:
 
-![Alt text](Code\AutoScalingGroup\stackparam.png)
+![Alt text](Code/AutoScalingGroup/stackparam.png)
 
 Submit the cloudformation template:
 
-![Alt text](Code\AutoScalingGroup\submitstack.png)
+![Alt text](Code/AutoScalingGroup/submitstack.png)
 
 Running website:
 
-![Alt text](Code\AutoScalingGroup\webhost.png)
+![Alt text](Code/AutoScalingGroup/webhost.png)
 
 Create AMI from running instance:
 
-![Alt text](Code\AutoScalingGroup\ami.png)
+![Alt text](Code/AutoScalingGroup/ami.png)
 
 Create Security Group:
 
-![Alt text](Code\AutoScalingGroup\sg.png)
+![Alt text](Code/AutoScalingGroup/sg.png)
 
 Auto Scaling Group Diagram:
 
-![Alt text](Code\AutoScalingGroup\asgdiag.png)
+![Alt text](Code/AutoScalingGroup/asgdiag.png)
 
 2. variables.tf - variables for azs, public subnet ciders
 
@@ -886,19 +886,19 @@ launch_template_latest_version = 1
 ```
 
 Running on us-east-1c
-![Alt text](Code\AutoScalingGroup\runningec2.png)
+![Alt text](Code/AutoScalingGroup/runningec2.png)
 
-![Alt text](Code\AutoScalingGroup\runningec2meta.png)
+![Alt text](Code/AutoScalingGroup/runningec2meta.png)
 
 After stressing the CPU
 
-![Alt text](Code\AutoScalingGroup\scaledec2.png)
+![Alt text](Code/AutoScalingGroup/scaledec2.png)
 
-![Alt text](Code\AutoScalingGroup\newec2a.png)
+![Alt text](Code/AutoScalingGroup/newec2a.png)
 
-![Alt text](Code\AutoScalingGroup\newec2b.png)
+![Alt text](Code/AutoScalingGroup/newec2b.png)
 
-![Alt text](Code\AutoScalingGroup\newec2c.png)
+![Alt text](Code/AutoScalingGroup/newec2c.png)
 
 
 Autoscalling Worked!!!
