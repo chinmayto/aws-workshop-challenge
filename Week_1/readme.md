@@ -43,7 +43,7 @@ resource "local_file" "WorkshopKeyPair" {
 ```
 Key pair in AWS Console:
 
-![Alt text](Code/KeyPair/keypair.png)
+![Alt text](Code/KeyPair/Images/keypair.png)
 
 ## 2. Web Tier EC2 Linux
 
@@ -257,7 +257,7 @@ web_instance_ip = "44.202.80.228"
 
 Running website:
 
-![Alt text](Code/WebTierEC2Linux/ec2linux.png)
+![Alt text](Code/WebTierEC2Linux/Images/ec2linux.png)
 
 Terraform Destroy output:
 
@@ -290,7 +290,7 @@ aws_vpc.app_vpc: Destruction complete after 2s
 Destroy complete! Resources: 7 destroyed.
 ```
 
-## 2. Web Tier EC2 Windows Server 2019
+## 3. Web Tier EC2 Windows Server 2019
 main.tf - create various resources (Provider and web EC2 instance with userdata)
 ```
 terraform {
@@ -500,9 +500,9 @@ web_instance_ip = "44.204.58.224"
 Running Website:
 It takes some time for windows website to run
 
-![Alt text](Code/WebTierEC2Win/ec2win.png)
+![Alt text](Code/WebTierEC2Win/Images/ec2win.png)
 
-![Alt text](Code/WebTierEC2Win/rdesk.png)
+![Alt text](Code/WebTierEC2Win/Images/rdesk.png)
 
 
 Terraform Destroy output:
@@ -541,7 +541,7 @@ Destroy complete! Resources: 7 destroyed.
 ```
 
 
-## 3. Auto Scaling Group
+## 4. Auto Scaling Group
 
 1. Create Custom AMI for auto scaling group from the YAML file provided in workshop
 
@@ -549,27 +549,27 @@ https://catalog.workshops.aws/general-immersionday/en-US/basic-modules/10-ec2/ec
 
 Create stack from yaml provided:
 
-![Alt text](Code/AutoScalingGroup/stackparam.png)
+![Alt text](Code/AutoScalingGroup/Images/stackparam.png)
 
 Submit the cloudformation template:
 
-![Alt text](Code/AutoScalingGroup/submitstack.png)
+![Alt text](Code/AutoScalingGroup/Images/submitstack.png)
 
 Running website:
 
-![Alt text](Code/AutoScalingGroup/webhost.png)
+![Alt text](Code/AutoScalingGroup/Images/webhost.png)
 
 Create AMI from running instance:
 
-![Alt text](Code/AutoScalingGroup/ami.png)
+![Alt text](Code/AutoScalingGroup/Images/ami.png)
 
 Create Security Group:
 
-![Alt text](Code/AutoScalingGroup/sg.png)
+![Alt text](Code/AutoScalingGroup/Images/sg.png)
 
 Auto Scaling Group Diagram:
 
-![Alt text](Code/AutoScalingGroup/asgdiag.png)
+![Alt text](Code/AutoScalingGroup/Images/asgdiag.png)
 
 2. variables.tf - variables for azs, public subnet ciders
 
@@ -886,19 +886,19 @@ launch_template_latest_version = 1
 ```
 
 Running on us-east-1c
-![Alt text](Code/AutoScalingGroup/runningec2.png)
+![Alt text](Code/AutoScalingGroup/Images/runningec2.png)
 
-![Alt text](Code/AutoScalingGroup/runningec2meta.png)
+![Alt text](Code/AutoScalingGroup/Images/runningec2meta.png)
 
 After stressing the CPU
 
-![Alt text](Code/AutoScalingGroup/scaledec2.png)
+![Alt text](Code/AutoScalingGroup/Images/scaledec2.png)
 
-![Alt text](Code/AutoScalingGroup/newec2a.png)
+![Alt text](Code/AutoScalingGroup/Images/newec2a.png)
 
-![Alt text](Code/AutoScalingGroup/newec2b.png)
+![Alt text](Code/AutoScalingGroup/Images/newec2b.png)
 
-![Alt text](Code/AutoScalingGroup/newec2c.png)
+![Alt text](Code/AutoScalingGroup/Images/newec2c.png)
 
 
 Autoscalling Worked!!!
@@ -975,4 +975,633 @@ aws_vpc.app_vpc: Destroying... [id=vpc-02b906e7043f3d8e6]
 aws_vpc.app_vpc: Destruction complete after 2s
 
 Destroy complete! Resources: 21 destroyed.
+```
+
+
+## 4. VPC
+
+![Alt text](Code\VPC\Images\VPC.png)
+
+1. network.tf - create VPC, subnets, igw and route tables
+```
+# Create the VPC
+resource "aws_vpc" "app_vpc" {
+  cidr_block = var.vpc_cidr
+
+  tags = {
+    Name = "${var.project_name}-VPC"
+  }
+}
+
+#create public subnets per zone
+resource "aws_subnet" "public_subnets" {
+  count             = length(var.public_subnet_cidrs)
+  vpc_id            = aws_vpc.app_vpc.id
+  cidr_block        = element(var.public_subnet_cidrs, count.index)
+  availability_zone = element(var.azs, count.index)
+
+  tags = {
+    Name = "Public Subnet ${count.index + 1}"
+  }
+}
+
+# Create the internet gateway
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.app_vpc.id
+
+  tags = {
+    Name = "${var.project_name}-igw"
+  }
+}
+
+# Create the route table
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.app_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = {
+    Name = "public_rt"
+  }
+}
+
+# Create route table assosiation with all public subnets
+resource "aws_route_table_association" "public_subnet_asso" {
+  count          = length(var.public_subnet_cidrs)
+  subnet_id      = element(aws_subnet.public_subnets[*].id, count.index)
+  route_table_id = aws_route_table.public_rt.id
+}
+```
+
+2. sg.tf - Security group to allow TCP / HTTP Traffic in and out
+
+```
+# Create the security group
+resource "aws_security_group" "sg" {
+  name        = "allow_ssh_http"
+  description = "Allow ssh http inbound traffic"
+  vpc_id      = aws_vpc.app_vpc.id
+
+  ingress {
+    description      = "SSH from VPC"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  ingress {
+    description      = "HTTP from VPC"
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = {
+    Name = "allow_ssh_http"
+  }
+}
+```
+
+Terraform apply output:
+```
+Plan: 8 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + vpc_id = (known after apply)
+aws_vpc.app_vpc: Creating...
+aws_vpc.app_vpc: Still creating... [10s elapsed]
+aws_vpc.app_vpc: Creation complete after 12s [id=vpc-059d3456553be459a]
+aws_internet_gateway.igw: Creating...
+aws_subnet.public_subnets[0]: Creating...
+aws_subnet.public_subnets[1]: Creating...
+aws_security_group.sg: Creating...
+aws_subnet.public_subnets[0]: Creation complete after 4s [id=subnet-05ecceebea4b2136b]
+aws_subnet.public_subnets[1]: Creation complete after 4s [id=subnet-071e4349c02fbbc0d]
+aws_internet_gateway.igw: Creation complete after 5s [id=igw-007b15c2ec3d3eda2]
+aws_route_table.public_rt: Creating...
+aws_security_group.sg: Still creating... [10s elapsed]
+aws_route_table.public_rt: Creation complete after 7s [id=rtb-066e33db9b41a9268]
+aws_route_table_association.public_subnet_asso[0]: Creating...
+aws_route_table_association.public_subnet_asso[1]: Creating...
+aws_security_group.sg: Creation complete after 13s [id=sg-0d0a95eaf56f6350c]
+aws_route_table_association.public_subnet_asso[0]: Creation complete after 4s [id=rtbassoc-0a312f30e30f9319a]
+aws_route_table_association.public_subnet_asso[1]: Creation complete after 4s [id=rtbassoc-0d9ce3dfd1bf287be]
+
+Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+vpc_id = "vpc-059d3456553be459a"
+```
+
+Terraform Destroy output:
+```
+Plan: 0 to add, 0 to change, 8 to destroy.
+
+Changes to Outputs:
+  - vpc_id = "vpc-059d3456553be459a" -> null
+aws_route_table_association.public_subnet_asso[0]: Destroying... [id=rtbassoc-0a312f30e30f9319a]
+aws_route_table_association.public_subnet_asso[1]: Destroying... [id=rtbassoc-0d9ce3dfd1bf287be]
+aws_security_group.sg: Destroying... [id=sg-0d0a95eaf56f6350c]
+aws_route_table_association.public_subnet_asso[1]: Destruction complete after 3s
+aws_route_table_association.public_subnet_asso[0]: Destruction complete after 3s
+aws_subnet.public_subnets[1]: Destroying... [id=subnet-071e4349c02fbbc0d]
+aws_subnet.public_subnets[0]: Destroying... [id=subnet-05ecceebea4b2136b]
+aws_route_table.public_rt: Destroying... [id=rtb-066e33db9b41a9268]
+aws_security_group.sg: Destruction complete after 3s
+aws_subnet.public_subnets[1]: Destruction complete after 2s
+aws_subnet.public_subnets[0]: Destruction complete after 2s
+aws_route_table.public_rt: Destruction complete after 3s
+aws_internet_gateway.igw: Destroying... [id=igw-007b15c2ec3d3eda2]
+aws_internet_gateway.igw: Destruction complete after 4s
+aws_vpc.app_vpc: Destroying... [id=vpc-059d3456553be459a]
+aws_vpc.app_vpc: Destruction complete after 1s
+
+Destroy complete! Resources: 8 destroyed.
+```
+
+## 5. IAM
+1. network.tf - create VPC and subnets
+
+```
+# Create the VPC
+resource "aws_vpc" "app_vpc" {
+  cidr_block = var.vpc_cidr
+
+  tags = {
+    Name = "${var.project_name}-VPC"
+  }
+}
+
+#create public subnets per zone
+resource "aws_subnet" "public_subnets" {
+  count             = length(var.public_subnet_cidrs)
+  vpc_id            = aws_vpc.app_vpc.id
+  cidr_block        = element(var.public_subnet_cidrs, count.index)
+  availability_zone = element(var.azs, count.index)
+
+  tags = {
+    Name = "Public Subnet ${count.index + 1}"
+  }
+}
+
+# Create the internet gateway
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.app_vpc.id
+
+  tags = {
+    Name = "${var.project_name}-igw"
+  }
+}
+
+# Create the route table
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.app_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = {
+    Name = "public_rt"
+  }
+}
+
+# Create route table assosiation with all public subnets
+resource "aws_route_table_association" "public_subnet_asso" {
+  count          = length(var.public_subnet_cidrs)
+  subnet_id      = element(aws_subnet.public_subnets[*].id, count.index)
+  route_table_id = aws_route_table.public_rt.id
+}
+```
+
+2. main.tf - create 2 EC2 instances (instance profile for prod_instance mentioned in iam.tf)
+```
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0"
+    }
+  }
+}
+
+# Configure the AWS Provider
+provider "aws" {
+  region  = var.region
+  profile = var.profile_name
+}
+
+
+# Get latest Amazon Linux 2 AMI
+data "aws_ami" "amazon-linux-2" {
+  most_recent = true
+  owners      = ["amazon"]
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm*"]
+  }
+}
+
+# Create the Linux EC2 Web server
+resource "aws_instance" "prod-instance" {
+  ami                         = data.aws_ami.amazon-linux-2.id
+  instance_type               = var.instance_type
+  key_name                    = var.instance_key
+  subnet_id                   = aws_subnet.public_subnets[0].id
+  security_groups             = [aws_security_group.sg.id]
+  associate_public_ip_address = true
+
+  # attach instance profile to EC2
+  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
+
+  user_data = <<-EOF
+  #!/bin/bash
+  yum update -y
+  yum install -y httpd.x86_64
+  systemctl start httpd.service
+  systemctl enable httpd.service
+  instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+   echo “AWS Linux VM Deployed with Terraform with instance id $instanceId” > /var/www/html/index.html
+  EOF
+
+  tags = {
+    Name = "prod-instance"
+    Env  = "prod"
+  }
+
+  volume_tags = {
+    Name = "prod-instance"
+  }
+}
+
+resource "aws_instance" "dev-instance" {
+  ami                         = data.aws_ami.amazon-linux-2.id
+  instance_type               = var.instance_type
+  key_name                    = var.instance_key
+  subnet_id                   = aws_subnet.public_subnets[1].id
+  security_groups             = [aws_security_group.sg.id]
+  associate_public_ip_address = true
+
+  user_data = <<-EOF
+  #!/bin/bash
+  yum update -y
+  yum install -y httpd.x86_64
+  systemctl start httpd.service
+  systemctl enable httpd.service
+  instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+   echo “AWS Linux VM Deployed with Terraform with instance id $instanceId” > /var/www/html/index.html
+  EOF
+
+  tags = {
+    Name = "dev-instance"
+    Env  = "dev"
+  }
+
+  volume_tags = {
+    Name = "dev-instance"
+  }
+}
+
+```
+
+
+3. iam.tf (Create IAM group, policy, user and then s3 buckets and ec2 instance profile)
+
+![Alt text](Code\IAM\Images\dev_policy_diag.png)
+
+![Alt text](Code\IAM\Images\ec2_policy_diag.png)
+
+```
+# Create a user group
+resource "aws_iam_group" "dev-group" {
+  name = "dev-group"
+}
+# Create IAM Policy for group
+resource "aws_iam_policy" "DevPolicy" {
+  name = "DevPolicy"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : "ec2:*",
+        "Resource" : "*",
+        "Condition" : {
+          "StringEquals" : {
+            "ec2:ResourceTag/Env" : "dev"
+          }
+        }
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : "ec2:Describe*",
+        "Resource" : "*"
+      },
+      {
+        "Effect" : "Deny",
+        "Action" : [
+          "ec2:DeleteTags",
+          "ec2:CreateTags"
+        ],
+        "Resource" : "*"
+      }
+    ]
+    }
+  )
+}
+
+resource "aws_iam_group_policy_attachment" "dev-attach" {
+  group      = aws_iam_group.dev-group.name
+  policy_arn = aws_iam_policy.DevPolicy.arn
+}
+
+# Create IAM User
+resource "aws_iam_user" "dev-user" {
+  name          = "dev-user"
+  force_destroy = true
+}
+
+resource "aws_iam_group_membership" "devstream" {
+  name  = aws_iam_user.dev-user.name
+  users = [aws_iam_user.dev-user.name]
+  group = aws_iam_group.dev-group.name
+}
+
+
+
+########
+
+# Create First Bucket
+resource "aws_s3_bucket" "chinmayto-s3" {
+  bucket = "chinmayto-s3"
+}
+
+resource "aws_s3_bucket_object" "object1" {
+  for_each = fileset("uploads/", "*")
+  bucket   = aws_s3_bucket.chinmayto-s3.id
+  key      = each.value
+  source   = "uploads/${each.value}"
+}
+
+# Create Second Bucket
+
+resource "aws_s3_bucket" "chinmayto-s3-other" {
+  bucket = "chinmayto-s3-other"
+}
+
+resource "aws_s3_bucket_object" "object2" {
+  for_each = fileset("uploads/", "*")
+  bucket   = aws_s3_bucket.chinmayto-s3-other.id
+  key      = each.value
+  source   = "uploads/${each.value}"
+}
+
+
+# Create policy for role
+resource "aws_iam_policy" "IAMBucketTestPolicy" {
+  name = "IAMBucketTestPolicy"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Action" : ["s3:ListAllMyBuckets", "s3:GetBucketLocation"],
+        "Effect" : "Allow",
+        "Resource" : ["arn:aws:s3:::*"]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:Get*",
+          "s3:List*"
+        ],
+        "Resource" : [
+          "arn:aws:s3:::chinmayto-s3/*",
+          "arn:aws:s3:::chinmayto-s3"
+        ]
+      }
+    ]
+    }
+  )
+}
+
+
+# Create a role that can be assumed by an Amazon EC2 instance
+resource "aws_iam_role" "ec2_role" {
+  name = "ec2_role"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+# Attach the role to the policy
+resource "aws_iam_role_policy_attachment" "example_attachment" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = aws_iam_policy.IAMBucketTestPolicy.arn
+}
+
+# Create an instance profile
+resource "aws_iam_instance_profile" "ec2_instance_profile" {
+  name = "ec2_instance_profile"
+  role = aws_iam_role.ec2_role.name
+}
+```
+
+I'd like to create a aws_iam_user_login_profile resource without the need for PGP.
+
+I understand the security risks, but for my use case I want to provision user login profiles in a sandbox environment using automated methods, which I dont want the overhead of using PGP.
+I feel that the PGP approach should be recommended, but not mandated for use.
+
+Technically you can still create a user (aws_iam_user) without a profile, but it won't have a password until someone manually enables login in the Console UI. When you create the user you probably want the force_destroy = true set otherwise terraform will refuse to delete the user later on if any changes are made by the user to their own account or a login password is enabled.
+
+Here i manually set the password for the dev-user from the console and logged in.
+
+Terraform apply output:
+```
+Plan: 25 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + vpc_id = (known after apply)
+aws_iam_group.dev-group: Creating...
+aws_iam_policy.DevPolicy: Creating...
+aws_iam_user.dev-user: Creating...
+aws_iam_role.ec2_role: Creating...
+aws_iam_policy.IAMBucketTestPolicy: Creating...
+aws_vpc.app_vpc: Creating...
+aws_s3_bucket.chinmayto-s3: Creating...
+aws_s3_bucket.chinmayto-s3-other: Creating...
+aws_iam_group.dev-group: Creation complete after 2s [id=dev-group]
+aws_iam_user.dev-user: Creation complete after 3s [id=dev-user]
+aws_iam_group_membership.devstream: Creating...
+aws_iam_policy.IAMBucketTestPolicy: Creation complete after 4s [id=arn:aws:iam::197317184204:policy/IAMBucketTestPolicy]
+aws_iam_policy.DevPolicy: Creation complete after 4s [id=arn:aws:iam::197317184204:policy/DevPolicy]
+aws_iam_group_policy_attachment.dev-attach: Creating...
+aws_iam_group_membership.devstream: Creation complete after 2s [id=dev-user]
+aws_iam_role.ec2_role: Creation complete after 5s [id=ec2_role]
+aws_iam_role_policy_attachment.example_attachment: Creating...
+aws_iam_instance_profile.ec2_instance_profile: Creating...
+aws_iam_group_policy_attachment.dev-attach: Creation complete after 2s [id=dev-group-20231020053733902200000001]
+aws_iam_role_policy_attachment.example_attachment: Creation complete after 2s [id=ec2_role-20231020053735190800000002]
+aws_iam_instance_profile.ec2_instance_profile: Creation complete after 3s [id=ec2_instance_profile]
+aws_vpc.app_vpc: Still creating... [10s elapsed]
+aws_s3_bucket.chinmayto-s3-other: Still creating... [10s elapsed]
+aws_s3_bucket.chinmayto-s3: Still creating... [10s elapsed]
+aws_vpc.app_vpc: Creation complete after 11s [id=vpc-0242ad26d96798181]
+aws_internet_gateway.igw: Creating...
+aws_subnet.public_subnets[1]: Creating...
+aws_subnet.public_subnets[0]: Creating...
+aws_security_group.sg: Creating...
+aws_subnet.public_subnets[1]: Creation complete after 4s [id=subnet-092952272f0d092c9]
+aws_subnet.public_subnets[0]: Creation complete after 4s [id=subnet-022e967d79173e3ee]
+aws_s3_bucket.chinmayto-s3: Creation complete after 16s [id=chinmayto-s3]
+aws_internet_gateway.igw: Creation complete after 5s [id=igw-0c389d257dfeb5b88]
+aws_s3_bucket_object.object1["text2.txt"]: Creating...
+aws_route_table.public_rt: Creating...
+aws_s3_bucket_object.object1["text1.txt"]: Creating...
+aws_s3_bucket.chinmayto-s3-other: Creation complete after 16s [id=chinmayto-s3-other]
+aws_s3_bucket_object.object2["text1.txt"]: Creating...
+aws_s3_bucket_object.object2["text2.txt"]: Creating...
+aws_s3_bucket_object.object1["text1.txt"]: Creation complete after 3s [id=text1.txt]
+aws_s3_bucket_object.object1["text2.txt"]: Creation complete after 3s [id=text2.txt]
+aws_s3_bucket_object.object2["text2.txt"]: Creation complete after 3s [id=text2.txt]
+aws_s3_bucket_object.object2["text1.txt"]: Creation complete after 3s [id=text1.txt]
+aws_security_group.sg: Still creating... [10s elapsed]
+aws_route_table.public_rt: Creation complete after 7s [id=rtb-003dddbd2a5a6d6d4]
+aws_route_table_association.public_subnet_asso[1]: Creating...
+aws_route_table_association.public_subnet_asso[0]: Creating...
+aws_security_group.sg: Creation complete after 12s [id=sg-0cd3cb4e882aa3a17]
+aws_instance.prod-instance: Creating...
+aws_instance.dev-instance: Creating...
+aws_route_table_association.public_subnet_asso[1]: Creation complete after 3s [id=rtbassoc-0fd101d8ae3a93cc1]
+aws_route_table_association.public_subnet_asso[0]: Creation complete after 3s [id=rtbassoc-0b97edb1258653edb]
+aws_instance.prod-instance: Still creating... [10s elapsed]
+aws_instance.dev-instance: Still creating... [10s elapsed]
+aws_instance.prod-instance: Still creating... [20s elapsed]
+aws_instance.dev-instance: Still creating... [20s elapsed]
+aws_instance.prod-instance: Still creating... [30s elapsed]
+aws_instance.dev-instance: Still creating... [30s elapsed]
+aws_instance.prod-instance: Still creating... [40s elapsed]
+aws_instance.dev-instance: Still creating... [40s elapsed]
+aws_instance.dev-instance: Creation complete after 49s [id=i-0dec276c66c253256]
+aws_instance.prod-instance: Creation complete after 49s [id=i-033d9d0fa827c3a06]
+
+Apply complete! Resources: 25 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+vpc_id = "vpc-0242ad26d96798181"
+```
+
+
+Testing:
+
+1. dev-user was unable to stop the prod-instance because of DevPolicy
+
+![Alt text](Code\IAM\Images\group_policy.png)
+
+2. prod-instance has instance profile with policy that it can access only first bucket
+
+![Alt text](Code\IAM\Images\ec2_policy.png)
+
+
+Terraform destroy output:
+
+```
+Plan: 0 to add, 0 to change, 25 to destroy.
+
+Changes to Outputs:
+  - vpc_id = "vpc-0242ad26d96798181" -> null
+aws_iam_group_policy_attachment.dev-attach: Destroying... [id=dev-group-20231020053733902200000001]
+aws_iam_group_membership.devstream: Destroying... [id=dev-user]
+aws_iam_role_policy_attachment.example_attachment: Destroying... [id=ec2_role-20231020053735190800000002]
+aws_route_table_association.public_subnet_asso[0]: Destroying... [id=rtbassoc-0b97edb1258653edb]
+aws_s3_bucket_object.object2["text1.txt"]: Destroying... [id=text1.txt]
+aws_s3_bucket_object.object1["text1.txt"]: Destroying... [id=text1.txt]
+aws_s3_bucket_object.object2["text2.txt"]: Destroying... [id=text2.txt]
+aws_s3_bucket_object.object1["text2.txt"]: Destroying... [id=text2.txt]
+aws_instance.dev-instance: Destroying... [id=i-0dec276c66c253256]
+aws_instance.prod-instance: Destroying... [id=i-033d9d0fa827c3a06]
+aws_iam_role_policy_attachment.example_attachment: Destruction complete after 1s
+aws_iam_group_policy_attachment.dev-attach: Destruction complete after 1s
+aws_iam_group_membership.devstream: Destruction complete after 1s
+aws_route_table_association.public_subnet_asso[1]: Destroying... [id=rtbassoc-0fd101d8ae3a93cc1]
+aws_s3_bucket_object.object1["text2.txt"]: Destruction complete after 1s
+aws_s3_bucket_object.object2["text1.txt"]: Destruction complete after 1s
+aws_iam_policy.DevPolicy: Destroying... [id=arn:aws:iam::197317184204:policy/DevPolicy]
+aws_iam_policy.IAMBucketTestPolicy: Destroying... [id=arn:aws:iam::197317184204:policy/IAMBucketTestPolicy]
+aws_s3_bucket_object.object1["text1.txt"]: Destruction complete after 1s
+aws_s3_bucket_object.object2["text2.txt"]: Destruction complete after 1s
+aws_iam_group.dev-group: Destroying... [id=dev-group]
+aws_iam_user.dev-user: Destroying... [id=dev-user]
+aws_s3_bucket.chinmayto-s3: Destroying... [id=chinmayto-s3]
+aws_s3_bucket.chinmayto-s3-other: Destroying... [id=chinmayto-s3-other]
+aws_iam_group.dev-group: Destruction complete after 1s
+aws_route_table_association.public_subnet_asso[0]: Destruction complete after 3s
+aws_s3_bucket.chinmayto-s3: Destruction complete after 2s
+aws_s3_bucket.chinmayto-s3-other: Destruction complete after 2s
+aws_iam_policy.IAMBucketTestPolicy: Destruction complete after 2s
+aws_iam_policy.DevPolicy: Destruction complete after 2s
+aws_route_table_association.public_subnet_asso[1]: Destruction complete after 3s
+aws_route_table.public_rt: Destroying... [id=rtb-003dddbd2a5a6d6d4]
+aws_route_table.public_rt: Destruction complete after 3s
+aws_internet_gateway.igw: Destroying... [id=igw-0c389d257dfeb5b88]
+aws_instance.dev-instance: Still destroying... [id=i-0dec276c66c253256, 10s elapsed]
+aws_instance.prod-instance: Still destroying... [id=i-033d9d0fa827c3a06, 10s elapsed]
+aws_iam_user.dev-user: Destruction complete after 10s
+aws_internet_gateway.igw: Still destroying... [id=igw-0c389d257dfeb5b88, 10s elapsed]
+aws_instance.dev-instance: Still destroying... [id=i-0dec276c66c253256, 20s elapsed]
+aws_instance.prod-instance: Still destroying... [id=i-033d9d0fa827c3a06, 20s elapsed]
+aws_internet_gateway.igw: Still destroying... [id=igw-0c389d257dfeb5b88, 20s elapsed]
+aws_instance.dev-instance: Still destroying... [id=i-0dec276c66c253256, 30s elapsed]
+aws_instance.prod-instance: Still destroying... [id=i-033d9d0fa827c3a06, 30s elapsed]
+aws_internet_gateway.igw: Still destroying... [id=igw-0c389d257dfeb5b88, 30s elapsed]
+aws_instance.dev-instance: Still destroying... [id=i-0dec276c66c253256, 40s elapsed]
+aws_instance.prod-instance: Still destroying... [id=i-033d9d0fa827c3a06, 40s elapsed]
+aws_internet_gateway.igw: Destruction complete after 40s
+aws_instance.dev-instance: Destruction complete after 48s
+aws_instance.prod-instance: Destruction complete after 48s
+aws_iam_instance_profile.ec2_instance_profile: Destroying... [id=ec2_instance_profile]
+aws_subnet.public_subnets[0]: Destroying... [id=subnet-022e967d79173e3ee]
+aws_subnet.public_subnets[1]: Destroying... [id=subnet-092952272f0d092c9]
+aws_security_group.sg: Destroying... [id=sg-0cd3cb4e882aa3a17]
+aws_iam_instance_profile.ec2_instance_profile: Destruction complete after 2s
+aws_security_group.sg: Destruction complete after 2s
+aws_subnet.public_subnets[1]: Destruction complete after 2s
+aws_subnet.public_subnets[0]: Destruction complete after 2s
+aws_iam_role.ec2_role: Destroying... [id=ec2_role]
+aws_vpc.app_vpc: Destroying... [id=vpc-0242ad26d96798181]
+aws_vpc.app_vpc: Destruction complete after 2s
+aws_iam_role.ec2_role: Destruction complete after 6s
+
+Destroy complete! Resources: 25 destroyed.
 ```
