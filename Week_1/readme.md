@@ -980,7 +980,7 @@ Destroy complete! Resources: 21 destroyed.
 
 ## 4. VPC
 
-![Alt text](Code\VPC\Images\VPC.png)
+![Alt text](Code/VPC/Images/VPC.png)
 
 1. network.tf - create VPC, subnets, igw and route tables
 ```
@@ -1284,9 +1284,9 @@ resource "aws_instance" "dev-instance" {
 
 3. iam.tf (Create IAM group, policy, user and then s3 buckets and ec2 instance profile)
 
-![Alt text](Code\IAM\Images\dev_policy_diag.png)
+![Alt text](Code/IAM/Images/dev_policy_diag.png)
 
-![Alt text](Code\IAM\Images\ec2_policy_diag.png)
+![Alt text](Code/IAM/Images/ec2_policy_diag.png)
 
 ```
 # Create a user group
@@ -1527,11 +1527,11 @@ Testing:
 
 1. dev-user was unable to stop the prod-instance because of DevPolicy
 
-![Alt text](Code\IAM\Images\group_policy.png)
+![Alt text](Code/IAM/Images/group_policy.png)
 
 2. prod-instance has instance profile with policy that it can access only first bucket
 
-![Alt text](Code\IAM\Images\ec2_policy.png)
+![Alt text](Code/IAM/Images/ec2_policy.png)
 
 
 Terraform destroy output:
