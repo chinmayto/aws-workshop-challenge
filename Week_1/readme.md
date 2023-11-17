@@ -1605,3 +1605,131 @@ aws_iam_role.ec2_role: Destruction complete after 6s
 
 Destroy complete! Resources: 25 destroyed.
 ```
+
+
+## 6 CloudWatch Alarms
+
+Creationg VPC, SG, IGW, EC2 is generic, please refer to code
+
+1. sns.tf - SNS topic with a subscription
+```
+locals {
+  emails = ["tefoso7941@wermink.com"]
+}
+
+resource "aws_sns_topic" "topic" {
+  name = "my-topic"
+}
+
+resource "aws_sns_topic_subscription" "topic_email_subscription" {
+  count     = length(local.emails)
+  topic_arn = aws_sns_topic.topic.arn
+  protocol  = "email"
+  endpoint  = local.emails[count.index]
+}
+```
+
+2. cloudwatch.tf - Cloudwatch Alarm for EC2
+
+```
+
+# Create a cloudwatch alarm for EC2 instance and alarm_actions to SNS topic
+resource "aws_cloudwatch_metric_alarm" "ec2_cpu" {
+  alarm_name                = "cpu-utilization"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = "2"
+  metric_name               = "CPUUtilization"
+  namespace                 = "AWS/EC2"
+  period                    = "60" #seconds
+  statistic                 = "Average"
+  threshold                 = "80"
+  alarm_description         = "This metric monitors ec2 cpu utilization"
+  insufficient_data_actions = []
+  alarm_actions             = [aws_sns_topic.topic.arn]
+  #ok_actions                = [aws_sns_topic.topic.arn]
+  dimensions = {
+    InstanceId = aws_instance.web.id
+  }
+}
+```
+Alarm in "Alarm" State and notification received on email
+![Alt text](Code/CloudWatch/Images/alarm.png)
+
+![Alt text](Code/CloudWatch/Images/sns.png)
+
+
+Terraform apply output:
+```
+Plan: 10 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + web_instance_id = (known after apply)
+  + web_instance_ip = (known after apply)
+aws_vpc.app_vpc: Creating...
+aws_sns_topic.topic: Creating...
+aws_sns_topic.topic: Creation complete after 9s [id=arn:aws:sns:us-east-1:197317184204:my-topic]
+aws_sns_topic_subscription.topic_email_subscription[0]: Creating...
+aws_vpc.app_vpc: Still creating... [10s elapsed]
+aws_sns_topic_subscription.topic_email_subscription[0]: Creation complete after 3s [id=arn:aws:sns:us-east-1:197317184204:my-topic:44d0a0aa-f4d3-4826-ac76-ae5bb4c4a100]
+aws_vpc.app_vpc: Creation complete after 12s [id=vpc-02666056544c4b65e]
+aws_internet_gateway.igw: Creating...
+aws_subnet.public_subnet: Creating...
+aws_security_group.sg: Creating...
+aws_internet_gateway.igw: Creation complete after 5s [id=igw-01a149c25017553ca]
+aws_route_table.public_rt: Creating...
+aws_subnet.public_subnet: Still creating... [10s elapsed]
+aws_security_group.sg: Still creating... [10s elapsed]
+aws_route_table.public_rt: Creation complete after 7s [id=rtb-06b4ff0698b8dbb12]
+aws_security_group.sg: Creation complete after 14s [id=sg-0e34b4991decffcb6]
+aws_route_table_association.public_rt_asso: Creating...
+aws_instance.web: Creating...
+aws_route_table_association.public_rt_asso: Creation complete after 4s [id=rtbassoc-07dd167cff46b5a24]
+aws_instance.web: Still creating... [10s elapsed]
+aws_instance.web: Still creating... [20s elapsed]
+aws_instance.web: Still creating... [30s elapsed]
+aws_instance.web: Creation complete after 38s [id=i-0f6f64ad67238fc16]
+aws_cloudwatch_metric_alarm.ec2_cpu: Creating...
+aws_cloudwatch_metric_alarm.ec2_cpu: Creation complete after 3s [id=cpu-utilization]
+
+Apply complete! Resources: 10 added, 0 changed, 0 destroyed.
+```
+
+
+Terraform Destroy Output:
+```
+Plan: 0 to add, 0 to change, 10 to destroy.
+
+Changes to Outputs:
+  - web_instance_id = "i-0f6f64ad67238fc16" -> null
+  - web_instance_ip = "184.73.148.107" -> null
+aws_route_table_association.public_rt_asso: Destroying... [id=rtbassoc-07dd167cff46b5a24]
+aws_sns_topic_subscription.topic_email_subscription[0]: Destroying... [id=arn:aws:sns:us-east-1:197317184204:my-topic:44d0a0aa-f4d3-4826-ac76-ae5bb4c4a100]
+aws_cloudwatch_metric_alarm.ec2_cpu: Destroying... [id=cpu-utilization]
+aws_cloudwatch_metric_alarm.ec2_cpu: Destruction complete after 1s
+aws_instance.web: Destroying... [id=i-0f6f64ad67238fc16]
+aws_sns_topic_subscription.topic_email_subscription[0]: Destruction complete after 2s
+aws_route_table_association.public_rt_asso: Destruction complete after 3s
+aws_sns_topic.topic: Destroying... [id=arn:aws:sns:us-east-1:197317184204:my-topic]
+aws_route_table.public_rt: Destroying... [id=rtb-06b4ff0698b8dbb12]
+aws_sns_topic.topic: Destruction complete after 1s
+aws_route_table.public_rt: Destruction complete after 3s
+aws_internet_gateway.igw: Destroying... [id=igw-01a149c25017553ca]
+aws_instance.web: Still destroying... [id=i-0f6f64ad67238fc16, 10s elapsed]
+aws_internet_gateway.igw: Still destroying... [id=igw-01a149c25017553ca, 10s elapsed]
+aws_instance.web: Still destroying... [id=i-0f6f64ad67238fc16, 20s elapsed]
+aws_internet_gateway.igw: Still destroying... [id=igw-01a149c25017553ca, 20s elapsed]
+aws_instance.web: Still destroying... [id=i-0f6f64ad67238fc16, 30s elapsed]
+aws_internet_gateway.igw: Still destroying... [id=igw-01a149c25017553ca, 30s elapsed]
+aws_instance.web: Still destroying... [id=i-0f6f64ad67238fc16, 40s elapsed]
+aws_internet_gateway.igw: Destruction complete after 37s
+aws_instance.web: Destruction complete after 48s
+aws_subnet.public_subnet: Destroying... [id=subnet-066d85c92f05ad056]
+aws_security_group.sg: Destroying... [id=sg-0e34b4991decffcb6]
+aws_subnet.public_subnet: Destruction complete after 3s
+aws_security_group.sg: Destruction complete after 3s
+aws_vpc.app_vpc: Destroying... [id=vpc-02666056544c4b65e]
+aws_vpc.app_vpc: Destruction complete after 2s
+
+Destroy complete! Resources: 10 destroyed.
+
+```
